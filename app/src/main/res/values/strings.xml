@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">News Flash</string>
+
+    <string name="news_not_found">News Not Found</string>
+
+    <string name="connection_failed">Internet Connection Failed</string>
+
+    <string name="tech_news_header_title">Technology News</string>
+
+    <string name="date">Date:</string>
+    <string name="test_text">Peop in the news and how it affects me to the bone to make nigeria easy to udersatnd</string>
+    <string name="time">Time:</string>
+    <string name="none">No name</string>
+    <string name="no_author">" "</string>
+    <string name="author">By:</string>
+    <string name="placeHold">Author\'s Name</string>
+    <string name="no_news_item_found">News Not Found</string>
+</resources>
