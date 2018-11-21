@@ -10,44 +10,49 @@ import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<List<TechNews>> {
 
-    // Guardian news API url..................
-    private String GAPI = "https://content.guardianapis.com/search?"; // Base Guardian API
+    private String API_URL = "https://content.guardianapis.com/search?";
     private static final String LOG_TAG = MainActivity.class.getName();
 
-    // Custom adapter initialisation and i still dont understand why it has to be here
-    private TechNewsAdapter mAdapt;
+    private TechNewsAdapter newsAdapter; //setting up an adapter for the new array
+
+    private TextView emptyStateTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
         // Get the list View
         ListView list = (ListView) findViewById(R.id.list);
 
-        TextView empty_list = (TextView) findViewById(R.id.failed);
-        list.setEmptyView(empty_list);
+
 
         // Setup a empty adapter for the list view
-        mAdapt = new TechNewsAdapter(this, new ArrayList<TechNews>());
-        list.setAdapter(mAdapt);
+        newsAdapter = new TechNewsAdapter(this, new ArrayList<TechNews>());
+        list.setAdapter(newsAdapter);
 
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
 
                 // Find the current news item that was clicked on
-                TechNews item = mAdapt.getItem(position);
+                TechNews item = newsAdapter.getItem(position);
                 Uri url = Uri.parse(item.getUrl());
 
                 Intent webIntent = new Intent(Intent.ACTION_VIEW, url);
@@ -55,51 +60,54 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             }
         });
 
-        // Get a reference to the ConnectivityManager to check state of network connectivity
-        ConnectivityManager connectionManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        // Check network connection
+        ConnectivityManager connectionManager = (ConnectivityManager)
+                getSystemService(Context.CONNECTIVITY_SERVICE);
 
-        // Get details on the currently active default data network
-        NetworkInfo networkInfo = connectionManager.getActiveNetworkInfo();
+        NetworkInfo internetConnection = connectionManager.getActiveNetworkInfo();
 
-        // If there is a network connection, fetch data
-        if (networkInfo != null && networkInfo.isConnected()) {
+        // fetch information if network is active
+        if (internetConnection != null && internetConnection.isConnected()) {
             LoaderManager loaderManager = getLoaderManager();
             loaderManager.initLoader(0, null, this);
         } else {
-            Log.e(LOG_TAG, "Connection problemo so... I think your better check your network man");
+            emptyStateTextView = (TextView)findViewById(R.id.no_news);
+            emptyStateTextView.setText(R.string.connection_failed);
         }
 
     }
 
     @Override
     public Loader<List<TechNews>> onCreateLoader(int i, Bundle bundle) {
-        Uri url = Uri.parse(GAPI);
+        Uri url = Uri.parse(API_URL);
 
-        //nigeria&tag=technology/technology&api-key=6348640e-b464-4e06-a89d-5bfb48b91362
+        //appending to the path
+        Uri.Builder uriBuilder = url.buildUpon();
+        //the most newest news comes on top
+        uriBuilder.appendQueryParameter("order-by", "newest");
+        uriBuilder.appendQueryParameter("show-tags", "contributor");
+        uriBuilder.appendQueryParameter("q", "tech");
+        uriBuilder.appendQueryParameter("api-key", "13d83a43-4ea4-4fdd-905d-6b9e7d49a302");
 
-        Uri.Builder buildUri = url.buildUpon();
-
-        buildUri.appendQueryParameter("q", "nigeria");
-        buildUri.appendQueryParameter("tag","technology/technology");
-        buildUri.appendQueryParameter("show-tags", "contributor" );
-        buildUri.appendQueryParameter("api-key","13d83a43-4ea4-4fdd-905d-6b9e7d49a302");
-
-        return new TechNewsLoader(this,buildUri.toString());
+        return new TechNewsLoader(this, uriBuilder.toString());
     }
 
     @Override
     public void onLoadFinished(Loader<List<TechNews>> loader, List<TechNews> news) {
 
-        mAdapt.clear();
+        ListView list = (ListView) findViewById(R.id.list);
+        TextView empty_list = (TextView) findViewById(R.id.no_news);
+        list.setEmptyView(empty_list);
 
-        if(news != null && !news.isEmpty()){
-            mAdapt.addAll(news);
+        newsAdapter.clear();
+
+        if (news != null && !news.isEmpty()) {
+            newsAdapter.addAll(news);
         }
-
     }
 
     @Override
     public void onLoaderReset(Loader<List<TechNews>> loader) {
-        mAdapt.clear();
+        newsAdapter.clear();
     }
 }
